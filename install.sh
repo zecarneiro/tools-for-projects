@@ -15,6 +15,7 @@ function _install () {
 
 function _uninstall () {
     sudo rm -r "$install_path"
+    sudo rm $bin_path/tools_for_projects
 }
 
 
