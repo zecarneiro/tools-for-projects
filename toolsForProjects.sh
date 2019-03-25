@@ -79,6 +79,24 @@ function clearScreen () {
 ################################################
 # Angular Projects
 ################################################
+function installDependencyAngular () {
+    echo "Installing NodeJS..."
+    local -a node_commands=("sudo chown -R $USER /usr/local" "sudo chown -R $USER /usr/local")
+    node_commands+=("sudo chown -R $USER:$(id -gn $USER) $HOME/.config" "sudo snap install node --channel=10/stable --classic")
+    for command in "${node_commands[@]}"; do
+        echo "Execute: $command"
+        eval $command
+    done
+    echo
+
+    echo "Installing Angular..."
+    local -a angular_commands=("echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p")
+    angular_commands+=("sudo npm install -g @angular/cli")
+    for command in "${angular_commands[@]}"; do
+        echo "Execute: $command"
+        eval $command
+    done
+}
 
 # Necessary operation for angular
 function angularTools () {
@@ -88,6 +106,9 @@ function angularTools () {
     while [ 1 ]; do
         setResetIsKillPID 0
         printMessage "${nameProjectArray[0]}"
+        echo
+        echo "0 - Install Dependencies"
+        echo "------"
         echo "1 - Create Project"
         echo "2 - Install With NPM"
         echo "3 - Update With NPM"
@@ -110,6 +131,9 @@ function angularTools () {
         fi
 
         case "$option" in
+            0) # Install Dependencies
+                installDependencyAngular
+            ;;
             1) # New
                 read -p "Insert name of project: " nameProject
                 if [ -n "$nameProject" ]; then
@@ -178,6 +202,23 @@ function angularTools () {
 ################################################
 # CakePHP Projects
 ################################################
+function installDependencyCake () {
+    echo "Installing Curl..."
+    echo "Execute: sudo apt install curl"
+    sudo apt install curl -y
+    echo "Execute: curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/bin --filename=composer"
+    curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/bin --filename=composer
+
+    echo "Installing PHP..."
+    local -a php_commands=("snmp-mibs-downloader" "php" "libapache2-mod-php" "php-mysql" "php-intl" "php-mbstring")
+    php_commands+=("php-xml" "php-curl" "php-gd" "php-pear" "php-imagick" "php-imap" "php-memcache" "php-pspell" "php-recode")
+    php_commands+=("php-snmp" "php-tidy" "php-xmlrpc" "php-sqlite3" "php-fpm")
+    for command in "${php_commands[@]}"; do
+        echo "Execute: sudo apt install $command"
+        sudo apt install $command -y
+    done
+}
+
 # Other CakePHP method
 function cakePhpOther () {
     local operation="$1"
@@ -202,13 +243,21 @@ function cakePhpOther () {
 function setCakeBashCompletion () {
     echo "Set Cake Bash Completion..."
     local _file_cake_script="/etc/bash_completion.d/cake"
-    local cake_bash_completion_script="/opt/tools_for_projects/files/cake"
+    local cake_bash_completion_directory="/opt/tools_for_projects/files/"
 
     # Install bash completion
     sudo apt install bash-completion -y
 
     # Install script
-    sudo cp "$cake_bash_completion_script" "$_file_cake_script"
+    if [ -d "$cake_bash_completion_directory" ]; then
+        if [ -f "$_file_cake_script" ]; then
+            sudo cp "$cake_bash_completion_directory" "$_file_cake_script"
+        else
+            echo "Error on set bash cake complete"
+        fi
+    else
+        echo "Error on set bash cake complete"
+    fi
 }
 
 # Necessary operation for cakephp
@@ -222,6 +271,9 @@ function cakePhpTools () {
     while [ 1 ]; do
         setResetIsKillPID 0
         printMessage "${nameProjectArray[1]}"
+        echo
+        echo "0 - Install Dependencies"
+        echo "------"
         echo "1 - Create Project"
         echo "2 - Install With Composer"
         echo "3 - Update With Composer"
@@ -253,6 +305,9 @@ function cakePhpTools () {
         fi
 
         case "$option" in
+            0) # Install Dependencies
+                installDependencyCake
+            ;;
             1) # New
                 read -p "Insert name of project: " nameProject
                 if [ -n "$nameProject" ]; then
@@ -397,6 +452,30 @@ function cakePhpTools () {
 ################################################
 # Docker Tools
 ################################################
+function installDependencyDocker () {
+    echo "Installing Curl..."
+    echo "Execute: sudo apt install curl"
+    sudo apt install curl -y
+
+    echo "Installing Docker..."
+    # Part 1
+    local -a docker_commands=("curl -sSL https://get.docker.com | sh" "sudo usermod -aG docker $USER")
+    for command in "${docker_commands[@]}"; do
+        echo "Execute: $command"
+        eval $command
+    done
+
+    # Part 2
+    docker_commands=("docker-ce-cli" "containerd.io" "docker-compose" "docker-containerd")
+    for command in "${docker_commands[@]}"; do
+        echo "Execute: sudo apt install $command"
+        sudo apt install $command -y
+    done
+
+    echo "Init Docker service..."
+    ./etc/init.d/docker start
+}
+
 function printListContainers () {
     printf "List of Containers...\n\n"
     docker ps
@@ -451,6 +530,9 @@ function dockerTools () {
 
     while [ 1 ]; do
         printMessage "${nameProjectArray[2]}"
+        echo
+        echo "0 - Install Dependencies"
+        echo "------"
         echo "1 - Build with docker compose"
         echo "2 - Up with docker compose"
         echo "3 - Up with docker compose and give you shell"
@@ -473,6 +555,9 @@ function dockerTools () {
 
         # Execute user option
         case "$optionInsertedByUser" in
+            0) # Install Dependencies
+                installDependencyDocker
+            ;;
             1) # Build
                 echo "Build..."
                 docker-compose build
@@ -522,15 +607,49 @@ function dockerTools () {
 ################################################
 # Database Tools
 ################################################
+function getDataBase () {
+    echo "Selection of Database" >&2
+    echo "1 - MySQL" >&2
+    echo "2 - MariaDb" >&2
+    echo "ENTER TO CANCEL" >&2
+    read -p "Insert an option: " option
+    echo "$option"
+}
+
+function installDependencyDatabases () {
+    local database_selected="$(getDataBase)"
+    local -a database_command
+
+    if [ "$database_selected" = "1" ]||[ "$database_selected" = "2" ]; then
+        if [ "$database_selected" = "1" ]; then
+            echo "Installing MySQL..."
+            database_command=("mysql-server" "mysql-client")
+        else
+            echo "Installing MariaDb..."
+            database_command=("mariadb-server" "mariadb-client")
+        fi
+
+        for command in "${database_command[@]}"; do
+            echo "Execute: sudo apt install $command"
+            sudo apt install $command -y
+        done
+        
+        printf "\n### CONFIG OPTIONS FOR MariaDB ###\n"
+		echo "Enter current password for root (enter for none): Just press the Enter"
+		echo "Set root password? [Y/n]: Y"
+		echo "New password: Enter password\n"
+		echo "Re-enter new password: Repeat password"
+		echo "Remove anonymous users? [Y/n]: Y"
+		echo "Disallow root login remotely? [Y/n]: Y"
+		echo "Remove test database and access to it? [Y/n]: Y"
+		printf "Reload privilege tables now? [Y/n]: Y\n"
+        sudo mysql_secure_installation
+    fi
+}
+
 # Grant All Access on database selected
 function grantAccessDatabase () {
-    echo "Selection of Database"
-    echo "1 - MySQL"
-    echo "2 - MariaDb"
-    echo "ENTER TO CANCEL"
-    read -p "Insert an option: " option
-
-    case "$option" in
+    case "$(getDataBase)" in
         1|2) # MySQL | MariaDb
             local bindAddressStr="bind-address"
             local addressStr="127.0.0.1"
@@ -617,6 +736,9 @@ function databaseTools () {
         echo "##########################"
         echo "Selected Tool: ${nameProjectArray[3]}"
         # Print Menu
+        echo
+        echo "0 - Install Dependencies"
+        echo "------"
         echo "1 - Grant All Access"
         echo "------"
         echo "2 - Back"
@@ -628,6 +750,9 @@ function databaseTools () {
         fi
         
         case "$option" in
+            0) # Install Dependencies
+                installDependencyDatabases
+            ;;
             1) # Grant All Access
                 grantAccessDatabase
             ;;
@@ -642,60 +767,42 @@ function databaseTools () {
 }
 
 ################################################
-# Main and Help
+# SSH Tools
 ################################################
-# Help
-function help () {
-    # Clear Screen
-    clearScreen
+function installDependencySSH () {
+    local database_selected="$(getDataBase)"
+    local -a ssh_command=("ssh" "xserver-xephyr")
 
-    # Print help Angular
-    printf "Angular:\n"
-    printf "\t1 - Node:\n"
-    printf "\t\t* sudo chown -R $USER /usr/local\n"
-    printf "\t\t* sudo chown -R $USER:$(id -gn $USER) $HOME/.config\n"
-    printf "\t\t* sudo snap install node --channel=10/stable --classic\n"
-    printf "\t2 - sudo npm install -g @angular/cli\n"
-    printf "\t3 - echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p\n"
+    if [ "$database_selected" = "1" ]||[ "$database_selected" = "2" ]; then
+        if [ "$database_selected" = "1" ]; then
+            echo "Installing MySQL..."
+            database_command=("mysql-server" "mysql-client")
+        else
+            echo "Installing MariaDb..."
+            database_command=("mariadb-server" "mariadb-client")
+        fi
 
-    printf "\n"
-
-    # Print help CakePHP
-    printf "CakePHP:\n"
-    printf "\t1 - PHP:\n"
-    printf "\t\t* sudo apt install snmp-mibs-downloader php libapache2-mod-php\n"
-    printf "\t\t* sudo apt install php-mysql php-intl php-mbstring php-xml php-curl php-gd\n"
-    printf "\t\t* sudo apt install php-pear php-imagick php-imap php-memcache php-pspell php-recode\n"
-    printf "\t\t* sudo apt install php-snmp php-tidy php-xmlrpc php-sqlite3 php-fpm\n"
-    printf "\t2 - Curl and Composer\n"
-    printf "\t\t* sudo apt install curl\n"
-    printf "\t\t* curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/bin --filename=composer\n"
-
-    printf "\n"
-
-    # Print help Docker
-    printf "Docker:\n"
-    printf "\t1 - Curl\n"
-    printf "\t\t* sudo apt install curl\n"
-    printf "\t2 - curl -sSL https://get.docker.com | sh\n"
-    printf "\t3 - sudo apt install docker-ce-cli containerd.io docker-compose docker-containerd\n"
-    printf "\t4 - sudo usermod -aG docker $USER\n"
-    printf "\t5 - ./etc/init.d/docker start\n"
-
-    printf "\n"
-
-    # Print help Databases
-    printf "Databases:\n"
-    printf "\t1 - MySQL\n"
-    printf "\t\t* sudo apt install mysql-server mysql-client\n"
-    printf "\t2 - MariaDb\n"
-    printf "\t\t* sudo apt install mariadb-server mariadb-client\n"
-
-    # Wait to user press enter
-    printf "\n"
-    read -p "PRESS ENTER TO CONTINUE... "
+        for command in "${database_command[@]}"; do
+            echo "Execute: sudo apt install $command"
+            sudo apt install $command -y
+        done
+        
+        printf "\n### CONFIG OPTIONS FOR MariaDB ###\n"
+		echo "Enter current password for root (enter for none): Just press the Enter"
+		echo "Set root password? [Y/n]: Y"
+		echo "New password: Enter password\n"
+		echo "Re-enter new password: Repeat password"
+		echo "Remove anonymous users? [Y/n]: Y"
+		echo "Disallow root login remotely? [Y/n]: Y"
+		echo "Remove test database and access to it? [Y/n]: Y"
+		printf "Reload privilege tables now? [Y/n]: Y\n"
+        sudo mysql_secure_installation
+    fi
 }
 
+################################################
+# Main and Help
+################################################
 # Main
 function main () {
     while [ 1 ]; do
@@ -704,7 +811,6 @@ function main () {
 
         # Print Menu
         echo "Tools necessary for projects"
-        echo "0 - Show Dependecies"
         echo "1 - Angular"
         echo "2 - CakePHP"
         echo "3 - Docker"
@@ -713,9 +819,6 @@ function main () {
         read -p "Insert an option: " option
 
         case "$option" in
-            0) # Help
-                help
-            ;;
             1) # Angular
                 angularTools
             ;;
