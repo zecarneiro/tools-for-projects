@@ -767,40 +767,6 @@ function databaseTools () {
 }
 
 ################################################
-# SSH Tools
-################################################
-function installDependencySSH () {
-    local database_selected="$(getDataBase)"
-    local -a ssh_command=("ssh" "xserver-xephyr")
-
-    if [ "$database_selected" = "1" ]||[ "$database_selected" = "2" ]; then
-        if [ "$database_selected" = "1" ]; then
-            echo "Installing MySQL..."
-            database_command=("mysql-server" "mysql-client")
-        else
-            echo "Installing MariaDb..."
-            database_command=("mariadb-server" "mariadb-client")
-        fi
-
-        for command in "${database_command[@]}"; do
-            echo "Execute: sudo apt install $command"
-            sudo apt install $command -y
-        done
-        
-        printf "\n### CONFIG OPTIONS FOR MariaDB ###\n"
-		echo "Enter current password for root (enter for none): Just press the Enter"
-		echo "Set root password? [Y/n]: Y"
-		echo "New password: Enter password\n"
-		echo "Re-enter new password: Repeat password"
-		echo "Remove anonymous users? [Y/n]: Y"
-		echo "Disallow root login remotely? [Y/n]: Y"
-		echo "Remove test database and access to it? [Y/n]: Y"
-		printf "Reload privilege tables now? [Y/n]: Y\n"
-        sudo mysql_secure_installation
-    fi
-}
-
-################################################
 # Main and Help
 ################################################
 # Main
