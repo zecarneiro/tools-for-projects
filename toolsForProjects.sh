@@ -205,7 +205,7 @@ function angularTools () {
 function installDependencyCake () {
     echo "Installing Curl..."
     echo "Execute: sudo apt install curl"
-    sudo apt install curl -y
+    sudo apt install curl
     echo "Execute: curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/bin --filename=composer"
     curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/bin --filename=composer
 
@@ -215,7 +215,7 @@ function installDependencyCake () {
     php_commands+=("php-snmp" "php-tidy" "php-xmlrpc" "php-sqlite3" "php-fpm")
     for command in "${php_commands[@]}"; do
         echo "Execute: sudo apt install $command"
-        sudo apt install $command -y
+        sudo apt install $command
     done
 }
 
@@ -455,7 +455,7 @@ function cakePhpTools () {
 function installDependencyDocker () {
     echo "Installing Curl..."
     echo "Execute: sudo apt install curl"
-    sudo apt install curl -y
+    sudo apt install curl
 
     echo "Installing Docker..."
     # Part 1
@@ -469,7 +469,7 @@ function installDependencyDocker () {
     docker_commands=("docker-ce-cli" "containerd.io" "docker-compose" "docker-containerd")
     for command in "${docker_commands[@]}"; do
         echo "Execute: sudo apt install $command"
-        sudo apt install $command -y
+        sudo apt install $command
     done
 
     echo "Init Docker service..."
@@ -631,7 +631,7 @@ function installDependencyDatabases () {
 
         for command in "${database_command[@]}"; do
             echo "Execute: sudo apt install $command"
-            sudo apt install $command -y
+            sudo apt install $command
         done
         
         printf "\n### CONFIG OPTIONS FOR MariaDB ###\n"
