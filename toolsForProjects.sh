@@ -210,9 +210,9 @@ function installDependencyCake () {
     curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/bin --filename=composer
 
     echo "Installing PHP..."
-    local -a php_commands=("snmp-mibs-downloader" "php" "libapache2-mod-php" "php-mysql" "php-intl" "php-mbstring")
-    php_commands+=("php-xml" "php-curl" "php-gd" "php-pear" "php-imagick" "php-imap" "php-memcache" "php-pspell" "php-recode")
-    php_commands+=("php-snmp" "php-tidy" "php-xmlrpc" "php-sqlite3" "php-fpm")
+    local -a php_commands=("snmp-mibs-downloader" "php-cli" "php-fpm" "php-intl" "php-mbstring" "php-xml")
+    php_commands+=("php-curl" "php-gd" "php-pear" "php-imagick" "php-imap" "php-memcache" "php-pspell")
+    php_commands+=("php-recode" "php-snmp" "php-tidy" "php-xmlrpc" "php-sqlite3" "php")
     for command in "${php_commands[@]}"; do
         echo "Execute: sudo apt install $command"
         sudo apt install $command
