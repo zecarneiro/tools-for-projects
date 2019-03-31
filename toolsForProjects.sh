@@ -892,7 +892,7 @@ function dependenciesTools () {
 
 
 ################################################
-# Main and Help
+# Main
 ################################################
 # Main
 function main () {
