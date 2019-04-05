@@ -595,6 +595,27 @@ function showIpAddressContainer () {
     fi
 }
 
+function allowOrDenyUFW () {
+    local -i isAllow="$1"
+
+    if [ $isAllow == "0" ]; then
+        read -p "Do you want alow firewall UFW for your container[y/N]: " response
+        if [ "$response" = "y" ]; then
+            showIpAddressContainer
+            read -p "Please, insert IP Address: " ip_address
+            sudo ufw allow from $ip_address
+        fi
+    elif [ $isAllow == "1" ]; then
+        read -p "Do you want deny firewall UFW for your container[y/N]: " response
+        if [ "$response" = "y" ]; then
+            showIpAddressContainer
+            read -p "Please, insert IP Address: " ip_address
+            sudo ufw deny from $ip_address
+            sudo ufw delete deny from $ip_address
+        fi
+    fi
+}
+
 function dockerTools () {
     # Clear Screen
     clearScreen
@@ -634,9 +655,11 @@ function dockerTools () {
             3) # Up and return shell to user
                 echo "Up and give shell..."
                 docker-compose up -d
+                allowOrDenyUFW 0
             ;;
             4) # Down
                 echo "Down..."
+                allowOrDenyUFW 1
                 docker-compose down
             ;;
             5) # Login to container
