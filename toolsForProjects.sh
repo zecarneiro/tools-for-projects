@@ -2,7 +2,7 @@
 # José M. C. Noronha
 
 # Global
-declare nameProjectArray=("Install Dendencies" "Angular" "CakePHP" "Docker" "DataBases")
+declare nameProjectArray=("Install Dendencies" "Angular" "CakePHP" "Docker" "DataBases" "WebServer")
 declare currentPath="$(echo $PWD)"
 declare pid
 declare isKillPID="0"
@@ -869,6 +869,94 @@ function databaseTools () {
 }
 
 ################################################
+# Web Server Tools
+################################################
+declare phpVersion=$(php -v | grep -i php | cut -d ' ' -f2 | cut -d '.' -f1-2 | head -1)
+
+function getWebServer () {
+    echo "Selection of Web Server" >&2
+    echo "1 - Apache2" >&2
+    echo "2 - NGinx" >&2
+    echo "ENTER TO CANCEL" >&2
+    read -p "Insert an option: " option
+    echo "$option"
+}
+
+function getTecnology () {
+    echo "Selection of Tecnology" >&2
+    echo "1 - PHP" >&2
+    echo "ENTER TO CANCEL" >&2
+    read -p "Insert an option: " option
+    echo "$option"
+}
+
+
+function configWebServer () {
+    local webserver_selected="$(getWebServer)"
+    local tecnology_selected="$(getTecnology)"
+
+    # Apache2
+    if [ "$webserver_selected" = "1" ]; then
+        # Enable mod rewrite
+        sudo a2enmod rewrite
+        sudo service apache2 restart
+
+        # Disable mod mpm_event
+        sudo a2dismod mpm_event
+        sudo service apache2 restart
+
+        if [ "$tecnology_selected" = "1" ]; then
+            # Enable mod php
+            sudo a2enmod php$phpVersion
+            sudo service apache2 restart
+        fi
+
+        # Reload and Restart
+        sudo service apache2 reload
+        sudo service apache2 restart
+
+    # NGinx
+    elif [ "$webserver_selected" = "2" ]; then
+        sudo service nginx start
+        sudo service nginx reload
+        sudo service nginx restart
+    fi
+}
+
+function webserverTools () {
+    # Clear Screen
+    clearScreen
+
+    # Execute
+    while [ 1 ]; do
+        echo "##########################"
+        echo "Selected Tool: ${nameProjectArray[5]}"
+        # Print Menu
+        echo
+        echo "1 - Config Web Server"
+        echo "2 - Enable Project"
+        echo "3 - Disable Project"
+        echo "------"
+        echo "Back, PRESS ENTER"
+        read -p "Insert an option: " option
+
+        if [ -n "$option" ]; then
+            clearScreen
+        fi
+        
+        case "$option" in
+            1) # Grant All Access
+                configWebServer
+            ;;
+            *) # Back
+                break
+            ;;
+        esac
+    done
+}
+
+
+################################################
 # Dependency Tools
 ################################################
 function dependenciesTools () {
@@ -913,7 +1001,6 @@ function dependenciesTools () {
     done
 }
 
-
 ################################################
 # Main
 ################################################
@@ -930,6 +1017,7 @@ function main () {
         echo "3 - CakePHP"
         echo "4 - Docker"
         echo "5 - Databases"
+        echo "6 - Web Server"
         echo "Exit, PRESS ENTER"
         read -p "Insert an option: " option
 
@@ -948,6 +1036,9 @@ function main () {
             ;;
             5) # Databases
                 databaseTools
+            ;;
+            6) # Webserver
+                webserverTools
             ;;
             *) # Exit
                 break
