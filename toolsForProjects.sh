@@ -860,6 +860,12 @@ function databaseTools () {
 ################################################
 declare phpVersion=$(php -v | grep -i php | cut -d ' ' -f2 | cut -d '.' -f1-2 | head -1)
 
+function printEnabledProjectsWebServer () {
+    local virtual_conf="$1"
+    local port="$2"
+    printf "FILE/PROJECT: $virtual_conf --- PORT: $port\n"
+}
+
 function getWebServer () {
     echo "Selection of Web Server" >&2
     echo "1 - Apache2" >&2
@@ -1154,7 +1160,7 @@ function getListEnabledWebProject () {
                 isUsed="$(cat /etc/apache2/sites-available/$virtual_conf | grep -c "$port")"
                 if [ $isUsed -gt 0 ]; then
                     isEmpty="1"
-                    printf "FILE: $virtual_conf --- PORT: $port\n"
+                    printEnabledProjectsWebServer "$virtual_conf" "$port"
                 fi
             done
         done
@@ -1171,7 +1177,7 @@ function getListEnabledWebProject () {
                 isUsed="$(cat /etc/nginx/sites-enabled/$virtual_conf | grep -c "$port")"
                 if [ $isUsed -gt 0 ]; then
                     isEmpty="1"
-                    printf "FILE: $virtual_conf --- PORT: $port\n"
+                    printEnabledProjectsWebServer "$virtual_conf" "$port"
                 fi
             done
         done    
