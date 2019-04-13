@@ -694,10 +694,15 @@ function installDependencyDatabases () {
     local -a database_commands
     local -i index="0"
     local name_database
+    local commandDatabase
+    local userDatabase
+    local -a query
 
     echo "Dependency Databases. Will be execute/install..."
 
     if [ "$database_selected" = "1" ]||[ "$database_selected" = "2" ]; then
+        userDatabase="root"
+
         # Define
         if [ "$database_selected" = "1" ]; then
             name_database="MySQL"
@@ -742,8 +747,25 @@ function installDependencyDatabases () {
                 printf "\n\n" 
                 index=$index+1              
             done
+
+            queries=("USE mysql;" "UPDATE mysql.user SET plugin='mysql_native_password' WHERE User='$userDatabase';" "FLUSH PRIVILEGES;")
+            if [ "$database_selected" = "1" ]; then
+                commandDatabase="sudo mysql -u $userDatabase"
+            else
+                commandDatabase="sudo mariadb -u $userDatabase"
+            fi
+            for query in "${queries[@]}"; do
+                $commandDatabase -p -e "$query"
+            done
+
+            if [ "$database_selected" = "1" ]; then
+                sudo service mysql restart
+            else
+                sudo service mariadb restart
+            fi
         fi
     fi
+            
 }
 
 # Grant All Access on database selected
