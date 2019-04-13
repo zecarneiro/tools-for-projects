@@ -770,7 +770,8 @@ function installDependencyDatabases () {
 
 # Grant All Access on database selected
 function grantAccessDatabase () {
-    case "$(getDataBase)" in
+    local option="$(getDataBase)"
+    case "$option" in
         1|2) # MySQL | MariaDb
             local bindAddressStr="bind-address"
             local addressStr="127.0.0.1"
