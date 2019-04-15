@@ -622,7 +622,8 @@ function dockerTools () {
         echo "7 - Print list of docker images"
         echo "8 - Remove Container with docker compose"
         echo "9 - Remove Images with docker"
-        echo "10 - Show IP Address of container"
+        echo "10 - Purging All Unused or Dangling Images, Containers, Volumes, and Networks"
+        echo "11 - Show IP Address of container"
         echo "----------"
         echo "Back, PRESS ENTER"
         read -p "Insert a option: "  optionInsertedByUser
@@ -634,7 +635,7 @@ function dockerTools () {
             ;;
             1) # Build
                 echo "Build..."
-                docker-compose build
+                docker-compose build --no-cache
             ;;
             2) # Up
                 echo "Up..."
@@ -666,7 +667,10 @@ function dockerTools () {
             9) # Remove Images
                 removeImages
             ;;
-            10) # Show Ip Address
+            10) # Purging All Unused or Dangling Images, Containers, Volumes, and Networks
+                docker system prune -a
+            ;;
+            11) # Show Ip Address
                 showIpAddressContainer
             ;;
             *) # Back
@@ -881,7 +885,10 @@ function databaseTools () {
 ################################################
 # Web Server Tools
 ################################################
-declare phpVersion=$(php -v | grep -i php | cut -d ' ' -f2 | cut -d '.' -f1-2 | head -1)
+declare phpVersion=""
+if [ `command -v php` ]; then
+    phpVersion=$(php -v | grep -i php | cut -d ' ' -f2 | cut -d '.' -f1-2 | head -1)
+fi
 
 function printEnabledProjectsWebServer () {
     local virtual_conf="$1"
