@@ -2,7 +2,7 @@
 # José M. C. Noronha
 
 # Global
-declare nameProjectArray=("Install Dendencies" "Angular" "CakePHP" "Docker" "DataBases" "WebServer")
+declare nameProjectArray=("Install Dendencies" "Angular" "CakePHP" "Docker" "DataBases" "WebServer" "Network")
 declare currentPath="$(echo $PWD)"
 declare pid
 declare isKillPID="0"
@@ -1260,6 +1260,100 @@ function webserverTools () {
 }
 
 ################################################
+# Network tools
+################################################
+declare -a all_ip_only
+declare -a all_interface_only
+
+function convertAllIpOrInterfaceToArray () {
+    local stringToConvert="$1"
+    local -i isIp="$2"
+    
+    # Convert ips and interfaces string to array
+    if [ "$isIp" -eq "1" ]; then
+        IFS=' ' read -r -a all_ip_only <<< "$stringToConvert"
+    else
+        IFS=' ' read -r -a all_interface_only <<< "$stringToConvert"
+    fi
+}
+
+function getAllIpOnly () {
+    local all_ip="$(hostname -I)"
+    echo "$all_ip"
+}
+
+function getAllInterfacesOnly () {
+    local all_interfaces="$(ip -o link show | awk -F': ' '{print $2}' | grep -wv lo | awk '{printf "%s" (NR%3==0?RS:FS),$1}')"
+    echo "$all_interfaces"
+}
+
+
+function showAllIp () {
+    local -i exist
+
+    # Get info
+    convertAllIpOrInterfaceToArray "$(getAllIpOnly)" 1
+    convertAllIpOrInterfaceToArray "$(getAllInterfacesOnly)" 0
+
+    printf "\nList IPs...\n"
+
+    for interface in "${all_interface_only[@]}"; do
+        echo "INTERFACE: $interface"
+        for ip in "${all_ip_only[@]}"; do
+            exist="$(ip -f inet addr show "$interface" | grep -wc "$ip")"
+            existSix="$(ip -f inet6 addr show "$interface" | grep -wc "$ip")"
+            if [ "$exist" -gt "0" ]||[ "$existSix" -gt "0" ]; then
+                printf "\t- $ip\n"
+            fi
+        done
+        printf "\n"
+    done
+}
+
+
+function networkTools () {
+    # Execute
+    while [ 1 ]; do
+        echo "##########################"
+        echo "Selected Tool: ${nameProjectArray[6]}"
+        # Print Menu
+        echo
+        echo "0 - Clear Screen"
+        echo "------"
+        echo "1 - Show All IP"
+        echo "2 - Enable Project"
+        echo "3 - Disable Project"
+        echo "4 - List Enabled Project"
+        echo "------"
+        echo "Back, PRESS ENTER"
+        read -p "Insert an option: " option
+        
+        case "$option" in
+            0) # Clear Screen
+                clearScreen
+            ;;
+            1) # Show All IP
+                showAllIp
+            ;;
+            2) # Enable Projects
+                enableWebProject
+            ;;
+            3) # Disable Project
+                disableWebProject
+            ;;
+            4) # Get List of enabled projects
+                getListEnabledWebProject
+            ;;
+            *) # Back
+                break
+            ;;
+        esac
+        printf "\n\n"
+    done
+}
+
+
+################################################
 # Dependency Tools
 ################################################
 function dependenciesTools () {
@@ -1327,6 +1421,7 @@ function main () {
         echo "4 - Docker"
         echo "5 - Databases"
         echo "6 - Web Server"
+        echo "7 - Network"
         echo "----------"
         echo "Exit, PRESS ENTER"
         read -p "Insert an option: " option
@@ -1352,6 +1447,9 @@ function main () {
             ;;
             6) # Webserver
                 webserverTools
+            ;;
+            7) # Network
+                networkTools
             ;;
             *) # Exit
                 break
