@@ -593,15 +593,21 @@ function allowOrDenyUFW () {
         if [ "$response" = "y" ]; then
             showIpAddressContainer
             read -p "Please, insert IP Address: " ip_address
-            sudo ufw allow from $ip_address
+
+            if [ -n "$ip_address" ]; then
+                sudo ufw allow from $ip_address
+            fi
         fi
     elif [ $isAllow == "1" ]; then
         read -p "Do you want deny firewall UFW for your container[y/N]: " response
         if [ "$response" = "y" ]; then
             showIpAddressContainer
             read -p "Please, insert IP Address: " ip_address
-            sudo ufw deny from $ip_address
-            sudo ufw delete deny from $ip_address
+
+            if [ -n "$ip_address" ]; then
+                sudo ufw deny from $ip_address
+                sudo ufw delete deny from $ip_address
+            fi
         fi
     fi
 }
@@ -624,6 +630,9 @@ function dockerTools () {
         echo "9 - Remove Images with docker"
         echo "10 - Purging All Unused or Dangling Images, Containers, Volumes, and Networks"
         echo "11 - Show IP Address of container"
+        echo "----------"
+        echo "12 - Allow firewall UFW for container"
+        echo "13 - Deny firewall UFW for container"
         echo "----------"
         echo "Back, PRESS ENTER"
         read -p "Insert a option: "  optionInsertedByUser
@@ -677,6 +686,12 @@ function dockerTools () {
             ;;
             11) # Show Ip Address
                 showIpAddressContainer
+            ;;
+            12) # Allow firewall UFW for container
+                allowOrDenyUFW 0
+            ;;
+            13) # Deny firewall UFW for container
+                allowOrDenyUFW 1
             ;;
             *) # Back
                 break
