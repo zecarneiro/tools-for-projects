@@ -668,6 +668,11 @@ function dockerTools () {
                 removeImages
             ;;
             10) # Purging All Unused or Dangling Images, Containers, Volumes, and Networks
+                echo "Stopping all containers..."
+                docker kill $(docker ps -q) # Kill all docker container running
+                printf "Stopping all containers Done.\n\n"
+
+                # Delete All
                 docker system prune -a
             ;;
             11) # Show Ip Address
