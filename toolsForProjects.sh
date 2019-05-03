@@ -653,11 +653,9 @@ function dockerTools () {
             3) # Up and return shell to user
                 echo "Up and give shell..."
                 docker-compose up -d
-                allowOrDenyUFW 0
             ;;
             4) # Down
                 echo "Down..."
-                allowOrDenyUFW 1
                 docker-compose down
             ;;
             5) # Login to container
