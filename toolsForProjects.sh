@@ -95,7 +95,7 @@ function installDependencyAngular () {
     done
 
     # Define angular
-    angular_commands=("echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p")
+    angular_commands=("echo fs.inotify.max_user_watches=262144 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p")
     angular_commands+=("sudo npm install -g @angular/cli")
     printf "\nAngular:\n"
     for angularCmd in "${angular_commands[@]}"; do
@@ -136,9 +136,10 @@ function angularTools () {
         echo "5 - Generate Service"
         echo "6 - Generate Module"
         echo "7 - Generate Guard"
+        echo "8 - Generate Module with Routers"
         echo "------"
-        echo "8 - Run Server"
-        echo "9 - Run Test"
+        echo "9 - Run Server"
+        echo "10 - Run Test"
         echo "------"
         echo "Back, PRESS ENTER"
         read -p "Insert an option: " option
@@ -162,7 +163,7 @@ function angularTools () {
                 echo "Updating..."
                 npm update
             ;;
-            4|5|6|7) # Generate
+            4|5|6|7|8) # Generate
                 local command="ng generate"
                 read -p "Insert name or full path(...path/filename): " fileName
                 
@@ -176,10 +177,12 @@ function angularTools () {
                         $command module "$fileName"
                     elif [ $option -eq 7 ]; then
                         $command guard "$fileName"
+                    elif [ $option -eq 8 ]; then
+                        $command module --routing=true "$fileName"
                     fi
                 fi
             ;;
-            8) # Run
+            9) # Run
                 # Clear screen
                 clearScreen
 
@@ -197,7 +200,7 @@ function angularTools () {
                 # Wait
                 waitProcessToKill
             ;;
-            9) # Test
+            10) # Test
                 echo "Running Test..."
                 ng test
             ;;
