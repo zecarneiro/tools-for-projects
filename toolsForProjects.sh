@@ -192,7 +192,7 @@ function angularTools () {
                 setHandler
 
                 # Execute
-                ng serve &
+                ng serve --liveReload=false --aot=true &
 
                 # Get pid of process
                 pid="$!"
