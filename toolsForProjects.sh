@@ -308,6 +308,83 @@ function setCakeBashCompletion () {
     fi
 }
 
+function runTestCakePhp () {
+    echo
+    echo "#### Global Without plugin ####"
+    echo "0 - Global Test"
+    echo "1 - Test Specific file PHP"
+    echo "2 - Test Specific Method"
+    echo "#### Plugin ####"
+    echo "3 - Global Test on Plugin"
+    echo "4 - Test Specific file PHP on Plugin"
+    echo "5 - Test Specific Method on Plugin"
+    echo "########"
+    echo "ENTER TO CANCEL"
+    read -p "Insert an option: " option
+
+    echo "Set Permission on necessary path!!!"
+    cakePhpOther 1
+
+    # Execute Global
+    if [ "$option" = "0" ]||[ "$option" = "1" ]||[ "$option" = "2" ]; then
+        local withDebug=""
+        read -p "With Debug: (y/N) " isDebug
+        if [ "$isDebug" = "y" ]; then
+            withDebug=" --debug"
+        fi
+
+        if [ "$option" = "0" ]; then
+            # Run
+            vendor/bin/phpunit$withDebug
+
+        elif [ "$option" = "1" ]||[ "$option" = "2" ]; then
+            read -p "Insert full path for file (tests/full/path/nameFile): " fileName
+            if [ -f "$fileName" ]; then
+                if [ "$option" = "1" ]; then
+                    vendor/bin/phpunit$withDebug "$fileName"
+                else
+                    read -p "Insert name of method: " methodName
+                    vendor/bin/phpunit$withDebug --filter "$methodName" "$fileName"
+                fi
+            else
+                echo "Not Exist: $fileName"
+            fi
+        fi
+    # Execute Plugin
+    elif [ "$option" = "3" ]||[ "$option" = "4" ]||[ "$option" = "5" ]; then
+        read -p "Insert name of plugin: " pluginName
+        if [ -n "$pluginName" ]; then
+            local pluginPath="plugins/$pluginName"
+
+            local withDebug=""
+            read -p "With Debug: (y/N) " isDebug
+            if [ "$isDebug" = "y" ]; then
+                withDebug=" --debug"
+            fi
+
+            if [ "$option" = "3" ]; then
+                cd "$pluginPath" && ../../vendor/bin/phpunit$withDebug
+
+            elif [ "$option" = "4" ]||[ "$option" = "5" ]; then
+                read -p "Insert full path for file (tests/full/path/nameFile): " fileName
+                if [ -f "$pluginPath/$fileName" ]; then
+                    if [ "$option" = "4" ]; then
+                        cd "$pluginPath" && ../../vendor/bin/phpunit$withDebug "$fileName"
+                    else
+                        read -p "Insert name of method: " methodName
+                        cd "$pluginPath" && ../../vendor/bin/phpunit$withDebug --filter "$methodName" "$fileName"
+                    fi
+                else
+                    echo "Not Exist: $fileName"
+                fi
+            fi
+        else
+            echo "Invalid plugin name!!!"
+        fi
+    fi    
+}
+
+
 # Necessary operation for cakephp
 function cakePhpTools () {
     local command="bin/cake bake"
@@ -464,11 +541,7 @@ function cakePhpTools () {
                 waitProcessToKill
             ;;
             14) # Run PHPUnit
-                # Set full permission on tmp and log folder
-                cakePhpOther 1
-
-                # Run
-                vendor/bin/phpunit
+                runTestCakePhp
             ;;
             15) # Set Permission
                 # Set full permission on tmp and log folder
