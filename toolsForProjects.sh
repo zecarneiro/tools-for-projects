@@ -120,6 +120,18 @@ function installDependencyAngular () {
     fi
 }
 
+function runTestForSpecFilesAngular () {
+    read -p "Insert full path for spec file(/full/path/file.spec.ts): " specFile
+    if [ -n "$specFile" ]; then
+        if [ -f "$specFile" ]; then
+            ng test --main "$specFile"
+        else
+            echo "Not Exist File: $specFile"
+        fi
+    fi
+}
+
+
 # Necessary operation for angular
 function angularTools () {
     while [ 1 ]; do
@@ -140,6 +152,7 @@ function angularTools () {
         echo "------"
         echo "9 - Run Server"
         echo "10 - Run Test"
+        echo "11 - Run Test for Specific Spec File"
         echo "------"
         echo "Back, PRESS ENTER"
         read -p "Insert an option: " option
@@ -203,6 +216,9 @@ function angularTools () {
             10) # Test
                 echo "Running Test..."
                 ng test
+            ;;
+            11) # Test Specific spec file
+                runTestForSpecFilesAngular
             ;;
             *) # Back
                 break
