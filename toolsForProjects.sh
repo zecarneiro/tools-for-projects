@@ -121,14 +121,18 @@ function installDependencyAngular () {
 }
 
 function runTestForSpecFilesAngular () {
-    read -p "Insert full path for spec file(/full/path/file.spec.ts): " specFile
-    if [ -n "$specFile" ]; then
-        if [ -f "$specFile" ]; then
-            ng test --main "$specFile"
-        else
-            echo "Not Exist File: $specFile"
-        fi
-    fi
+    echo
+    echo "Jasmine allows you to prefix describe and it methods with an f (for focus?)."
+    echo "So, fdescribe and fit. If you use either of these, karma will only run the relevant tests."
+    echo "So, to focus the current file, you can just take the top level describe and change it to fdescribe"
+    read -p "Change it and PRESS ENTER to continue..." enterPressed
+
+    # Run test
+    ng test
+
+    # Wait to reverse changes
+    echo
+    read -p "Reverse all change files end PRESS ENTER to continue" enterPressed
 }
 
 
