@@ -415,10 +415,10 @@ function runTestCakePhp () {
 
 # Necessary operation for cakephp
 function cakePhpTools () {
-    local command="bin/cake bake"
-
     # Execute
     while [ 1 ]; do
+        command="bin/cake bake"
+        pluginInfo=""
         setResetIsKillPID 0
         printMessage "${nameProjectArray[2]}"
         echo
@@ -445,8 +445,27 @@ function cakePhpTools () {
         echo "15 - Set Permission"
         echo "16 - Set Bash Completion"
         echo "------"
+        echo "17 - Create Plugin"
+        echo "------"
         echo "Back, PRESS ENTER"
         read -p "Insert an option: " option
+
+        case "$option" in
+            4|5|6|7|8|11|12)
+                read -p "On Plugin? (y/N) " isPlugin
+                if [ "$isPlugin" = "y" ]; then
+                    read -p "Insert name of Plugin: " pluginName
+                    if [ ! -d "plugins/$pluginName" ]; then
+                        echo "Not exist plugin with name: $pluginName"
+                        echo
+                        continue
+                    else
+                        pluginInfo="--plugin $pluginName"
+                    fi
+                fi
+            ;;
+            *) # Default
+        esac
 
         case "$option" in
             0) # Clear Screen
@@ -487,13 +506,13 @@ function cakePhpTools () {
                 if [ -n "$databaseName" ]; then
                     echo "Generating..."
                     if [ $option -eq 4 ]; then
-                        $command all "$databaseName"
+                        $command all $pluginInfo "$databaseName"
                     elif [ $option -eq 5 ]; then
-                        $command controller "$databaseName"
+                        $command controller $pluginInfo "$databaseName"
                     elif [ $option -eq 6 ]; then
-                        $command model "$databaseName"
+                        $command model $pluginInfo "$databaseName"
                     elif [ $option -eq 7 ]; then
-                        $command template "$databaseName"
+                        $command template $pluginInfo "$databaseName"
                     fi
                 fi
             ;;
@@ -503,7 +522,7 @@ function cakePhpTools () {
                 if [ -n "$className" ]; then
                     echo "Generating..."
                     if [ $option -eq 8 ]; then
-                        $command component "$className"
+                        $command component $pluginInfo "$className"
                     elif [ $option -eq 9 ]; then
                         $command shell "$className"
                     elif [ $option -eq 10 ]; then
@@ -520,7 +539,7 @@ function cakePhpTools () {
 
                 if [ -n "$classDatabaseTestName" ]; then
                     if [ $option -eq 11 ]; then
-                        $command fixture "$classDatabaseTestName"
+                        $command fixture $pluginInfo "$classDatabaseTestName"
                     elif [ $option -eq 12 ]; then
                         echo "1 - Entity"
                         echo "2 - Table"
@@ -546,7 +565,7 @@ function cakePhpTools () {
                         esac
 
                         if [ -n "$subcommand" ]; then
-                            $command test "$subcommand" "$classDatabaseTestName"
+                            $command test $pluginInfo "$subcommand" "$classDatabaseTestName"
                         fi
                     fi
                 fi
@@ -577,6 +596,15 @@ function cakePhpTools () {
             ;;
             16) # Set Bash Completion
                 setCakeBashCompletion
+            ;;
+            17) # Create Plugin
+                read -p "Insert Name of Plugin(without space): " pluginCreateName
+                pluginCreateName="${pluginCreateName//" "}"
+                if [ -n "$pluginCreateName" ]; then
+                    echo "Create Plugin..."
+                    $command plugin "$pluginCreateName"
+                    composer dumpautoload
+                fi
             ;;
             *) # Back
                 break
