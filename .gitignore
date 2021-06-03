@@ -1,0 +1,9 @@
+/bin/*
+/node_modules/*
+/.vscode/*
+/test/*
+/dist/*
+/utils/*
+!/.vscode/launch.json
+!/.vscode/settings.json
+!/.vscode/tasks.json
