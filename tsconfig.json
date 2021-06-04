@@ -1,0 +1,21 @@
+{
+   "compilerOptions": {
+      "experimentalDecorators": true,
+      "target": "es5",
+      "lib": [
+         "es2017",
+         "es2015",
+         "dom",
+         "es6"
+      ],
+      "module": "commonjs",
+      "outDir": "bin",
+      "sourceMap": false,
+      "strict": false,
+      "noImplicitUseStrict": true
+   },
+   "exclude": [
+      "node_modules",
+      ".vscode"
+   ]
+}
