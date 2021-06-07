@@ -1,0 +1,3 @@
+[submodule "utils/nodejs-utils"]
+	path = utils/nodejs-utils
+	url = https://github.com/zecarneiro/nodejs-utils.git

@@ -5,17 +5,17 @@
 declare arg="$1"
 declare bin_path="/usr/bin"
 declare install_path="/opt/tools_for_projects"
-declare tools_script="toolsForProjects.sh"
+declare tools_script="ToolsForProjects.sh"
 
 function _install () {
     sudo chmod -R 777 .
     sudo cp -r . "$install_path"
-    sudo ln -sf "$install_path/$tools_script" $bin_path/tools_for_projects
+    sudo ln -sf "$install_path/$tools_script" $bin_path/$tools_script
 }
 
 function _uninstall () {
     sudo rm -r "$install_path"
-    sudo rm $bin_path/tools_for_projects
+    sudo rm $bin_path/$tools_script
 }
 
 
