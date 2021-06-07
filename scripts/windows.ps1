@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("install","uninstall", IgnoreCase = $false)] # IgnoreCase set autocomplete
+    [ValidateSet("install","uninstall", "create-exec", IgnoreCase = $false)] # IgnoreCase set autocomplete
     [string]
     $INSTALLER,
     [switch]
@@ -126,6 +126,17 @@ function CheckCommandExist {
     }
     return $false
 }
+function CompressItems {
+    param (
+        [string[]]$files,
+        [string]$dest = $(throw "Please specify a destination")
+    )
+    if ($files.Count -eq 0) {
+        Compress-Archive -Path .\* -DestinationPath $dest -Force
+    } else {
+        Compress-Archive -LiteralPath $files -DestinationPath $dest -Force
+    }
+}
 #============ END OF FUNCTIONS UTILS ============
 
 #================================================
@@ -230,6 +241,8 @@ function Main {
         Install
     } elseif ($INSTALLER -eq "uninstall") {
         Uninstall
+    } elseif ($INSTALLER -eq "create-exec") {
+        CompressItems -files @("files", "scripts", "src", "utils", "package-lock.json", "package.json", "tsconfig.json") -dest $projectName
     }
     if ($RESET_JETBRAINS) { ResetJetbrains }
     if ($JAVA_PATH.Length -gt 0) {
