@@ -181,7 +181,7 @@ export class Docker extends App {
                 }
                 break;
             case EPlatformType.windows:
-                this.logger.info('To install docker, visit: https://www.docker.com/products/docker-desktop');
+                this.logger.info('*Docker - Link install:* https://www.docker.com/products/docker-desktop');
                 for (const iterator of commands) {
                     const output = this.nodejsUtils.console.execSyncWhitoutOutput({cmd: iterator.cmd});
                     if (output.hasError) {
@@ -195,8 +195,6 @@ export class Docker extends App {
     }
 
     private informations() {
-        this.logger.info(this.rootDir);
-        this.logger.info(this.processDir);
         Generic.getLogger('Portainer').log(`
         - *Link install:* https://documentation.portainer.io/v2.0/deploy/ceinstalldocker
         `);

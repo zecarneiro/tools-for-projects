@@ -1,3 +1,6 @@
+import { EShellType } from './../../utils/nodejs-utils/src/enum/shell-type';
+import { EPlatformType } from './../../utils/nodejs-utils/src/enum/platform-type-enum';
+import { ICommandInfo } from './../../utils/nodejs-utils/src/interface/comand-info';
 import { Generic } from './../../utils/nodejs-utils/src/lib/generic';
 import { EErrorMessages } from './../../utils/nodejs-utils/src/enum/error-messages';
 import { FilesSystem } from './../../utils/nodejs-utils/src/lib/files-system';
@@ -11,13 +14,54 @@ export class Others extends App {
     
     protected menu() {
         this.nodeMenu
+            // Git
             .addDelimiter('-', this.delimiterWithTitle, 'Git')
             .addItem('Add scripts', this.gitAddScripts, this, [{'name': 'file', 'type': 'string'}, {'name': 'extension', 'type': 'string'}])
             .addItem('Rebase', this.gitRebase, this, [{'name': 'branch(Default: master)', 'type': 'string'}])
             .addItem('Reset file', this.gitResetFile, this, [{'name': 'file', 'type': 'string'}, {'name': 'branch(Default: origin/master)', 'type': 'string'}])
             .addItem('Update tags', this.gitUpdateTags, this)
             .addItem('Update submodule', this.gitUpdateSubmodule, this)
-            .addItem('Delete submodule', this.gitDeleteSubmodule, this, [{'name': 'submodule(Path: path/to/submodule)', 'type': 'string'}]);
+            .addItem('Delete submodule', this.gitDeleteSubmodule, this, [{'name': 'submodule(Path: path/to/submodule)', 'type': 'string'}])
+
+            // UFW Firewall
+            .addDelimiter('-', this.delimiterWithTitle, 'UFW Firewall')
+            .addItem('UFW Firewall allow IP', (ip: string) => {
+                if (!FilesSystem.isValidIP(ip)) {
+                    this.logger.error(EErrorMessages.invalidIp);
+                    return;
+                }
+                if (FilesSystem.isPlatform(EPlatformType.linux)) {
+                    this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'sudo', args: ['ufw', 'allow', 'from', ip]});
+                } else {
+                    this.logger.error(EErrorMessages.invalidPlatform);
+                }
+            }, this, [{'name': 'IP', 'type': 'string'}])
+            .addItem('UFW Firewall deny IP', (ip: string) => {
+                if (!FilesSystem.isValidIP(ip)) {
+                    this.logger.error(EErrorMessages.invalidIp);
+                    return;
+                }
+                if (FilesSystem.isPlatform(EPlatformType.linux)) {
+                    this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'sudo', args: ['ufw', 'deny', 'from', ip]});
+                    this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'sudo', args: ['ufw', 'delete', 'deny', 'from', ip]});
+                } else {
+                    this.logger.error(EErrorMessages.invalidPlatform);
+                }
+            }, this, [{'name': 'IP', 'type': 'string'}])
+
+            // Others
+            .addDelimiter('-', this.delimiterWithTitle)
+            .addItem('Reset JetBrains IDE', this.resetJetbrains, this)
+            .addItem('Install/Uninstall JAVA', (path: string) => {
+                path = path.length > 0 ? path : '-u';
+                if (path !== '-u' && !FilesSystem.fileExist(path, true)) {
+                    this.logger.error(EErrorMessages.invalidFile);
+                    return;
+                }
+                const cmd = this.nodejsUtils.console.setRootPermissionCmd(`${this.windowsPowershellScript} -JAVA_PATH '${path}'`, true);
+                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: cmd}, 0, EShellType.powershell);
+            }, this, [{'name': 'JAVA PATH(To uninstall pass empty string)', 'type': 'string'}])
+            .addItem('Install Dependency', this.installDependencies, this);
     }
 
     /**============================================
@@ -87,4 +131,42 @@ export class Others extends App {
         FilesSystem.deleteFile(`".git/modules/${name}"`);
     }
     /*=============== END OF GIT ==============*/
+
+    @annotateName
+    private resetJetbrains() {
+        switch (FilesSystem.getPlatform().data) {
+            case EPlatformType.linux:
+                this.logger.warn('Not implemented yet');
+                break;
+            case EPlatformType.windows:
+                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: EShellType.powershell, args: [this.windowsPowershellScript, '-RESET_JETBRAINS']});
+                break;
+            default:
+                this.logger.warn('Not implemented yet');
+                break;
+        }
+    }
+
+    @annotateName
+    private installDependencies() {
+        let commands: ICommandInfo[] = [];
+        const platform = FilesSystem.getPlatform();
+        switch (platform.data) {
+            case EPlatformType.linux:
+                commands.push({cmd: 'sudo apt install git'});
+                commands.push({cmd: 'sudo apt install libz-dev libssl-dev libcurl4-gnutls-dev libexpat1-dev gettext cmake gcc'});
+                for (const iterator of commands) {
+                    const output = this.nodejsUtils.console.execSyncWhitoutOutput({cmd: iterator.cmd});
+                    if (output.hasError) {
+                        break;
+                    }
+                }
+                break;
+            case EPlatformType.windows:
+                this.logger.info('*Git - Link install:* https://git-scm.com/downloads');
+                break;
+            default:
+                throw platform.error;
+        }
+    }
 }
