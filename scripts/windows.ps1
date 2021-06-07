@@ -23,6 +23,7 @@ $listUnnecessaryFiles = @(
 function WaitForUserInputToConitnue {
     Write-Host -NoNewLine 'Press any key to continue...';
     $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
+    Write-Host "`n"
 }
 function PrintMessage() {
     param(
@@ -216,12 +217,16 @@ function ResetJetbrains {
 function InstallUninstallJava() {
     $sysenv = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
     $path = (Get-ItemProperty -Path $sysenv -Name Path).Path
+    $isSet = $false
 
     # Remove old
     $oldJava = "$env:JAVA_HOME"
     if ($oldJava.Length -gt 0) {
         PrintMessage -message "Uninstall: $oldJava" "none"
         $path = $path.replace(";$oldJava\bin", "")
+        Set-ItemProperty -Path "$sysenv" -Name Path -Value "$path"
+        Remove-ItemProperty -Path "$sysenv" -Name JAVA_HOME
+        $isSet = $true
     }
 
     if (($JAVA_PATH.Length -gt 0) -and ($JAVA_PATH -ne "-u")) {
@@ -229,6 +234,10 @@ function InstallUninstallJava() {
         setx /m JAVA_HOME "$JAVA_PATH"
         $path = $path + ";$JAVA_PATH\bin"
         Set-ItemProperty -Path "$sysenv" -Name Path -Value "$path"
+        $isSet = $true
+    }
+
+    if ($isSet) {
         Stop-Process -ProcessName explorer
     }
 }
