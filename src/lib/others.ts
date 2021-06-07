@@ -85,7 +85,7 @@ export class Others extends App {
         branch = branch && branch.length > 0 ? branch : 'master';
         const currentBranch = currentBranchCmd.stdout as string;
         this.gitFetchOrigin();
-        this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'git', args: ['rebase', branch, branch]});
+        this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'git', args: ['rebase', `origin/${branch}`, branch]});
         if (branch !== currentBranch) {
             this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'git', args: ['rebase', branch, currentBranch]});
         }
