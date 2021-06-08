@@ -13,7 +13,8 @@ export abstract class App {
     protected readonly rootDir = path.join(__dirname, '..', '..');
     protected readonly filesDir = FilesSystem.resolvePath(`${this.rootDir}/files`);
     protected readonly scriptsDir = FilesSystem.resolvePath(`${this.rootDir}/scripts`);
-    protected readonly windowsPowershellScript = FilesSystem.resolvePath(`${this.scriptsDir}/windows.ps1`);
+    protected readonly windowsScriptsDir = FilesSystem.resolvePath(`${this.rootDir}/scripts/windows`);
+    protected readonly windowsPowershellScript = FilesSystem.resolvePath(`${this.windowsScriptsDir}/windows.ps1`);
     protected error: Error | undefined;
     protected nodeMenu = require('node-menu');
     protected readonly headerMenu = 'Tools for Projects';
