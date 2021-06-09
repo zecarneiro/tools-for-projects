@@ -23,11 +23,6 @@ $CURRENT_DIRECTORY = "$PSScriptRoot"
 
 $projectName = "tools-for-projects"
 $installDir = "$HOME\OtherApps\$projectName"
-$listUnnecessaryFiles = @(
-    # Git and vscode
-    ".git", ".gitignore", ".gitmodules", ".vscode", "utils\nodejs-utils\.git", "utils\nodejs-utils\.gitignore"
-    "utils\nodejs-utils\src", "src"
-)
 
 #================================================
 #                INSTALL/UNINSTALL
@@ -52,12 +47,7 @@ function Install {
     CreateItem "$installDir"
     Copy-Item -Path "*" -Destination "$installDir" -Recurse
     Set-Location "$installDir"
-    InvokeCommand -program "npm" -argumentString "install" -waitForExit -cwd "$installDir"
-    InvokeCommand -program "npm" -argumentString "run compile" -waitForExit -cwd "$installDir"
     InvokeCommand -program "npm" -argumentString "install -g ." -waitForExit -cwd "$installDir"
-    Foreach ($unnecessaryFile in $listUnnecessaryFiles) {
-        RemoveItem $unnecessaryFile
-    }
     Set-Location "$CURRENT_DIRECTORY"
     Set-Location ..\..
     PrintMessage -message "Install complete" "success"
@@ -138,7 +128,9 @@ function Main {
     } elseif ($INSTALLER -eq "uninstall") {
         Uninstall
     } elseif ($INSTALLER -eq "create-exec") {
-        CompressItems -files @("files", "scripts", "src", "utils", "package-lock.json", "package.json", "tsconfig.json") -dest $projectName
+        InvokeCommand -program "npm" -argumentString "install" -waitForExit -cwd "$(GetDir -type "pwd")"
+        InvokeCommand -program "npm" -argumentString "run compile" -waitForExit -cwd "$(GetDir -type "pwd")"
+        CompressItems -files @("bin", "files", "node_modules", "scripts", "package-lock.json", "package.json", "tsconfig.json") -dest $projectName
     }
     if ($RESET_JETBRAINS) { ResetJetbrains }
     if ($JAVA_PATH.Length -gt 0) {
