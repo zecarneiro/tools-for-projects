@@ -197,3 +197,15 @@ function CompressItems {
         Compress-Archive -LiteralPath $files -DestinationPath $dest -Force
     }
 }
+function GetDir {
+    param (
+        [ValidateSet("pwd","scriptbasedir", IgnoreCase = $false)]
+        [string] $type
+    )
+    if ($type -eq "pwd") {
+        return Get-Location | Foreach-Object { $_.Path }
+    } elseif ($type -eq "scriptbasedir") {
+        return $PSScriptRoot
+    }
+    return $null
+}
