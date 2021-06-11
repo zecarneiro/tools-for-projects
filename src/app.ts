@@ -32,7 +32,8 @@ export abstract class App {
         const headerTitle = setClassNameTitle ? `  ${this.headerMenu} - ${this.className}`:  `\t${this.headerMenu}`;
         this.nodeMenu = this.nodeMenu.resetMenu()
             .customHeader(() => {
-                Generic.printMessages(`${headerTitle}\n\n`, EMessagesType.title);
+                const title = `${headerTitle}\nFor optional args, pass empty string: \"\" or ''\n\n`;
+                Generic.printMessages(title, EMessagesType.title);
             }).disableDefaultHeader()
             .customPrompt(() => {
                 Generic.printMessages(this.promptMenu, EMessagesType.other);
@@ -45,6 +46,19 @@ export abstract class App {
     }
     protected get logger(): Logger {
         return Generic.getLogger(`${this.className}::${this.currentMethod} `);
+    }
+    protected getOptionalArg(prefix: string, defaultValue?: string, description?: string): string {
+        let message = defaultValue && defaultValue.length > 0
+            ? `${prefix}(OPTIONAL -> Default: ${defaultValue})`
+            : `${prefix}(OPTIONAL)`;
+
+        if (description && description.length > 0) {
+            return this.getDescriptionArg(message, description);
+        }
+        return message;
+    }
+    protected getDescriptionArg(prefix: string, description: string): string {
+        return `${prefix} - ${description}`;
     }
 
     @annotateName
