@@ -16,12 +16,12 @@ export class Others extends App {
         this.nodeMenu
             // Git
             .addDelimiter('-', this.delimiterWithTitle, 'Git')
-            .addItem('Add scripts', this.gitAddScripts, this, [{'name': 'file', 'type': 'string'}, {'name': 'extension', 'type': 'string'}])
-            .addItem('Rebase', this.gitRebase, this, [{'name': 'branch(Default: master)', 'type': 'string'}])
-            .addItem('Reset file', this.gitResetFile, this, [{'name': 'file', 'type': 'string'}, {'name': 'branch(Default: origin/master)', 'type': 'string'}])
+            .addItem('Add scripts', this.gitAddScripts, this, [{'name': 'file', 'type': 'string'}])
+            .addItem('Rebase', this.gitRebase, this, [{'name': this.getOptionalArg('branch', 'master'), 'type': 'string'}])
+            .addItem('Reset file', this.gitResetFile, this, [{'name': 'file', 'type': 'string'}, {'name': this.getOptionalArg('branch', 'origin/master'), 'type': 'string'}])
             .addItem('Update tags', this.gitUpdateTags, this)
             .addItem('Update submodule', this.gitUpdateSubmodule, this)
-            .addItem('Delete submodule', this.gitDeleteSubmodule, this, [{'name': 'submodule(Path: path/to/submodule)', 'type': 'string'}])
+            .addItem('Delete submodule', this.gitDeleteSubmodule, this, [{'name': this.getDescriptionArg('submodule', 'path/to/submodule. Go to .gitmodules to see how'), 'type': 'string'}])
 
             // UFW Firewall
             .addDelimiter('-', this.delimiterWithTitle, 'UFW Firewall')
@@ -60,7 +60,7 @@ export class Others extends App {
                 }
                 const cmd = this.nodejsUtils.console.setRootPermissionCmd(`${this.windowsPowershellScript} -JAVA_PATH '${path}'`, true);
                 this.nodejsUtils.console.execSyncWhitoutOutput({cmd: cmd}, 0, EShellType.powershell);
-            }, this, [{'name': 'JAVA PATH(To uninstall pass empty string)', 'type': 'string'}])
+            }, this, [{'name': this.getDescriptionArg('JAVA_PATH', 'To uninstall pass empty string'), 'type': 'string'}])
             .addItem('Install Dependency', this.installDependencies, this);
     }
 
@@ -118,7 +118,7 @@ export class Others extends App {
         name = Generic.removeLastCharacter(name, ['/']);
         const status = this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'git', args: ['submodule', 'status', `"${name}"`]});
         if (status.hasError) {
-            this.logger.error(status.errorStr);
+            this.logger.error(status.error);
             return;
         }
         this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'git', args: ['submodule', 'deinit', '-f', `"${name}"`]});
