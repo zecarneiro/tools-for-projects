@@ -1,14 +1,15 @@
-import { FilesSystem } from './../../utils/nodejs-utils/src/lib/files-system';
+import { Response, ResponseBuilder } from './../../utils/nodejs-utils/src/lib/response';
+import { IResponse } from './../../utils/nodejs-utils/src/interface/response';
 import { Generic } from './../../utils/nodejs-utils/src/lib/generic';
 import { ICommandInfo } from './../../utils/nodejs-utils/src/interface/comand-info';
-import { EPortainerOperation } from './../enum/portainer-operation';
-import { IPortainerCommands } from './../interface/portainer-commands';
 import { App } from "../app";
 import { EPlatformType } from "../../utils/nodejs-utils/src/enum/platform-type-enum";
 import { EDockerOperation } from '../enum/docker-operation';
 import { annotateName } from '../../utils/nodejs-utils/src/lib/decorators';
+import { FilesSystem } from '../../utils/nodejs-utils/src/lib/files-system';
 
 export class Docker extends App {
+    private readonly containerNamePortainer = 'portainer';
     constructor() {
         super();
     }
@@ -17,14 +18,15 @@ export class Docker extends App {
         this.nodeMenu
             // Portainer
             .addDelimiter('-', this.delimiterWithTitle, 'Portainer')
-            .addItem('Install/Update', this.operationsPortainer, this, [
-                {'name': 'type', 'type': 'string'},
-                {'name': 'password', 'type': 'string'}
-            ])
-            .addItem('Uninstall', () => { this.operationsPortainer(EPortainerOperation.uninstall); }, this)
-            .addItem('Reset Password', () => { this.operationsPortainer(EPortainerOperation.resetPassword); }, this)
-            .addItem('Stop', () => { this.operationsPortainer(EPortainerOperation.stop); }, this)
-            .addItem('Start', () => { this.operationsPortainer(EPortainerOperation.start); }, this)
+            .addItem('Install', this.installPortainer, this, [{'name': this.getOptionalArg('password'), 'type': 'string'}])
+            .addItem('Update', (password: string) => {
+                this.uninstallPortainer();
+                this.installPortainer(password);
+            }, this, [{'name': this.getOptionalArg('password'), 'type': 'string'}])
+            .addItem('Uninstall', this.uninstallPortainer, this)
+            .addItem('Reset Password', this.resetPasswordPortainer, this)
+            .addItem('Stop', () => { this.startStopPortainer(true); }, this)
+            .addItem('Start', this.startStopPortainer, this)
 
             // Docker Operations
             .addDelimiter('-', this.delimiterWithTitle, 'Operations')
@@ -37,7 +39,7 @@ export class Docker extends App {
             .addItem('Remove All', () => { this.operationsDocker(EDockerOperation.removeAll); }, this)
 
             // Others
-            .addDelimiter('-', this.delimiterWithTitle)
+            .addDelimiter('-', this.delimiter)
             .addItem('Informations', this.informations, this)
             .addItem('Install Dependency', this.installDependencies, this);
     }
@@ -45,117 +47,104 @@ export class Docker extends App {
     /**============================================
      *!               PORTAINER
      *=============================================**/
-     @annotateName
-    private getPortainerCommands(password?: string): IPortainerCommands {
-        let passwordArg: string = '';
-        if (password && password.length > 0) {
-            const hashPassword = Generic.hashPassword('admin', password ? password : '');
-            if (hashPassword.hasError) {
-                this.logger.error(hashPassword.errorStr);
-            } else {
-                passwordArg = `--admin-password="${hashPassword.data}"`;
-            }
-        }
-        
-        return {
-            createVolume: {
-                cmd: 'docker',
-                args: ['volume', 'create', 'portainer_data']
-            },
-            install: {
-                cmd: 'docker',
-                args: [
-                    'run -d -p 8000:8000 -p 9000:9000',
-                    '--name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce',
-                    passwordArg
-                ]
-            },
-            resetPassword: {
-                cmd: 'docker',
-                args: ['run --rm -v portainer_data:/data portainer/helper-reset-password']
-            }
-        };
+    private createVolumePortainer(): IResponse<number|null> {
+        return this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['volume', 'create', 'portainer_data']});
     }
 
     @annotateName
-    private operationsPortainer(type: string, password?: string) {
-        const containerName = 'portainer';
-        let portainerCmd = this.getPortainerCommands(password);
-        switch (type) {
-            case EPortainerOperation.install:
-                if (!this.nodejsUtils.console.execSyncWhitoutOutput({cmd: portainerCmd.createVolume.cmd, args: portainerCmd.createVolume.args}).hasError) {
-                    this.nodejsUtils.console.execSyncWhitoutOutput({cmd: portainerCmd.install.cmd,args: portainerCmd.install.args});
-                }
-                this.logger.warn('If password not working, please reset password or stop and remove all unused');
-                break;
-            case EPortainerOperation.uninstall:
-                this.operationsDocker(EDockerOperation.stopContainer, containerName);
-                this.operationsDocker(EDockerOperation.removeContainer, containerName);
-                this.operationsDocker(EDockerOperation.removeImage);
-                break;
-            case EPortainerOperation.update:
-                this.operationsPortainer(EPortainerOperation.uninstall);
-                this.operationsPortainer(EPortainerOperation.install);
-                break;
-            case EPortainerOperation.resetPassword:
-                this.operationsPortainer(EPortainerOperation.stop);
-                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: portainerCmd.resetPassword.cmd, args: portainerCmd.resetPassword.args});
-                this.operationsPortainer(EPortainerOperation.start);
-                break;
-            case EPortainerOperation.stop:
-                this.operationsDocker(EDockerOperation.stopContainer, containerName);
-                break;
-            case EPortainerOperation.start:
-                this.operationsDocker(EDockerOperation.startContainer, containerName);
-                break;
-            default:
-                let portainerOpEnumValues: string = '';
-                Generic.getEnumData(EPortainerOperation).forEach(val => {
-                    if (portainerOpEnumValues.length == 0) {
-                        portainerOpEnumValues = val;
-                    } else {
-                        portainerOpEnumValues += `|${val}`;
-                    }
-                });
-                this.logger.warn(`Only accept arguments: ${portainerOpEnumValues}`);
-                break;
+    private installPortainer(password: string = ''): IResponse<number|null> {
+        const hashPassword = Generic.hashPassword('admin', password);
+        if (hashPassword.hasError) {
+            this.logger.error(hashPassword.error);
+        } else {
+            password = `--admin-password="${hashPassword.data}"`;
         }
+        let createVolume = this.createVolumePortainer();
+        if (createVolume.hasError) {
+            return createVolume;
+        }
+        this.logger.warn('If password not working, please reset password!!!');
+        return this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: [
+            'run -d -p 8000:8000 -p 9000:9000',
+            '--name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce',
+            password
+        ]});
+    }
+
+    @annotateName
+    private uninstallPortainer(): IResponse<number|null> {
+        let response: IResponse<number|null> = new Response();
+        [EDockerOperation.stopContainer, EDockerOperation.removeContainer, EDockerOperation.removeImage].forEach(op => {
+            response = this.operationsDocker(op, this.containerNamePortainer);
+            if (response.hasError) {
+                return response;
+            }
+        });
+        return response;
+    }
+
+    @annotateName
+    private resetPasswordPortainer(): IResponse<number|null> {
+        let response = this.startStopPortainer(true);
+        if (response.hasError){
+            return response;
+        }
+        response = this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['run --rm -v portainer_data:/data portainer/helper-reset-password']});
+        if (!response.hasError) {
+            return this.startStopPortainer();
+        }
+        return response;
+    }
+
+    @annotateName
+    private startStopPortainer(isStop: boolean = false): IResponse<number|null> {
+        if (isStop) {
+            return this.operationsDocker(EDockerOperation.stopContainer, this.containerNamePortainer);
+        }
+        return this.operationsDocker(EDockerOperation.startContainer, this.containerNamePortainer);
     }
     /*=============== END OF PORTAINER ==============*/
 
     /**============================================
      *!               OTHERS
      *=============================================**/
-    private operationsDocker(type: EDockerOperation, name?: string) {
+    private operationsDocker(type: EDockerOperation, name?: string): IResponse<number|null> {
         name = name ? name : '';
         switch (type) {
             case EDockerOperation.stopContainer:
-                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['stop', name]});
-                break;
+                return this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['stop', name]});
             case EDockerOperation.startContainer:
-                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['start', name]});
-                break;
+                return this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['start', name]});
             case EDockerOperation.removeContainer:
-                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['rm', name]});
-                break;
+                return this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['rm', name]});
             case EDockerOperation.removeVolume:
-                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['volume', 'rm', name]});
-                break;
+                return this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['volume', 'rm', name]});
             case EDockerOperation.removeImage:
-                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['image', 'ls']});
-                const id = this.nodejsUtils.console.readKeyboard('Please insert ID to delete: ');
-                if (id) {
-                    this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['image', 'rmi', id]});
+                let imageLs = this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['image', 'ls']});
+                if (!imageLs.hasError) {
+                    const id = this.nodejsUtils.console.readKeyboard('Please insert ID to delete: ');
+                    if (id) {
+                        return this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['image', 'rmi', id]});
+                    }
                 }
-                break;
+                return imageLs;
             case EDockerOperation.removeAllUnused:
-                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['system prune -a']});
-                break;
+                return this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['system prune -a']});
             case EDockerOperation.removeAll:
-                this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['system prune']});
-                break;
+                return this.nodejsUtils.console.execSyncWhitoutOutput({cmd: 'docker', args: ['system prune']});
             default:
-                break;
+                let dockerOpEnumValues: string = '';
+                Generic.getEnumData(EDockerOperation).forEach(val => {
+                    if (dockerOpEnumValues.length == 0) {
+                        dockerOpEnumValues = val;
+                    } else {
+                        dockerOpEnumValues += `|${val}`;
+                    }
+                });
+                return new ResponseBuilder<number|null>()
+                            .withData(111)
+                            .withError(new Error(dockerOpEnumValues))
+                            .build();
         }
     }
 
