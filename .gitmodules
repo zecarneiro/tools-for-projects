@@ -1,6 +1,3 @@
-[submodule "utils/nodejs-utils"]
-	path = utils/nodejs-utils
-	url = https://github.com/zecarneiro/nodejs-utils.git
 [submodule "utils/node-menu"]
 	path = utils/node-menu
 	url = https://github.com/zecarneiro/node-menu.git
