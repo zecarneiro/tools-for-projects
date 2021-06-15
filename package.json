@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "^15.6.1",
-    "node-menu": "file:utils/node-menu",
-    "nodejs-utils": "file:utils/nodejs-utils"
+    "node-menu": "file:sub-projects/node-menu",
+    "utils": "file:sub-projects/utils"
   }
 }

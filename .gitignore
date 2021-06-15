@@ -8,3 +8,4 @@
 !/.vscode/settings.json
 !/.vscode/tasks.json
 *.zip
+package-lock.json
