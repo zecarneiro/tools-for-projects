@@ -1,10 +1,10 @@
-import { Generic } from './../utils/nodejs-utils/src/lib/generic';
-import { FilesSystem } from './../utils/nodejs-utils/src/lib/files-system';
-import { Logger } from 'logdown';
-import { EMessagesType } from '../utils/nodejs-utils/src/enum/messages-type-enum';
-import { NodejsUtils } from '../utils/nodejs-utils/src';
-import { annotateName } from '../utils/nodejs-utils/src/lib/decorators';
 import * as path from 'path';
+import { Console } from '../sub-projects/utils/nodejs/console';
+import { annotateName } from '../sub-projects/utils/nodejs/decorators';
+import { FilesSystem } from '../sub-projects/utils/nodejs/files-system';
+import { Generic } from '../sub-projects/utils/nodejs/generic';
+import { LoggerExtend } from '../sub-projects/utils/nodejs/logger-extend';
+import * as NodeMenu from 'node-menu';
 
 export abstract class App {
     protected className: string = '';
@@ -16,15 +16,30 @@ export abstract class App {
     protected readonly windowsScriptsDir = FilesSystem.resolvePath(`${this.rootDir}/scripts/windows`);
     protected readonly windowsPowershellScript = FilesSystem.resolvePath(`${this.windowsScriptsDir}/windows.ps1`);
     protected error: Error | undefined;
-    protected nodeMenu = require('node-menu');
+    protected nodeMenu: NodeMenu = require('node-menu');
     protected readonly headerMenu = 'Tools for Projects';
     protected readonly promptMenu = 'Insert an option(With args - Option "arg1" arg2...): ';
     protected readonly delimiterWithTitle: number = 40;
     protected readonly delimiter: number = 40;
-    protected nodejsUtils: NodejsUtils;
 
-    constructor(private exitOnError?: boolean) {
-        this.nodejsUtils = new NodejsUtils();
+    protected constructor(private exitOnError?: boolean) {}
+
+    private _logger: LoggerExtend|undefined;
+    protected get logger(): LoggerExtend {
+        if (!this._logger) {
+            this._logger = new LoggerExtend();
+        }
+        this._logger.class = this.className;
+        this._logger.method = this.currentMethod;
+        return this._logger;
+    }
+
+    private _console: Console|undefined;
+    protected get console(): Console {
+        if (!this._console) {
+            this._console = new Console();
+        }
+        return this._console;
     }
 
     @annotateName
@@ -32,21 +47,28 @@ export abstract class App {
         const headerTitle = setClassNameTitle ? `  ${this.headerMenu} - ${this.className}`:  `\t${this.headerMenu}`;
         this.nodeMenu = this.nodeMenu.resetMenu()
             .customHeader(() => {
-                const title = `${headerTitle}\nFor optional args, pass empty string: \"\" or ''\n\n`;
-                Generic.printMessages(title, EMessagesType.title);
+                const title = headerTitle + '\nFor optional args, pass empty string: ""\n';
+                this.logger.title(title);
             }).disableDefaultHeader()
             .customPrompt(() => {
-                Generic.printMessages(this.promptMenu, EMessagesType.other);
+                this.logger.prompt(this.promptMenu);
             }).disableDefaultPrompt();
     }
 
     protected abstract menu(): void;
-    protected haveError(): boolean {
+    protected hasError(): boolean {
         return this.error ? true : false;
     }
-    protected get logger(): Logger {
-        return Generic.getLogger(`${this.className}::${this.currentMethod} `);
+    protected processError(error?: Error, noExitTemp?: boolean) {
+        this.error = error;
+        if (this.hasError()) {
+            this.logger.log(Generic.getErrorObjectData(this.error));
+            if (!noExitTemp && this.exitOnError) {
+                process.exit(1);
+            }
+        }
     }
+    
     protected getOptionalArg(prefix: string, defaultValue?: string, description?: string): string {
         let message = defaultValue && defaultValue.length > 0
             ? `${prefix}(OPTIONAL -> Default: ${defaultValue})`
@@ -72,8 +94,8 @@ export abstract class App {
             }
             this.nodeMenu.start();
         } catch (error) {
-            this.error = new Error(error);
-            this.logger.error(this.error);
+            this.error = error;
+            this.logger.success(error);
             if (this.exitOnError) {
                 process.exit(1);
             }
