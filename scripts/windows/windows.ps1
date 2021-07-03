@@ -5,7 +5,9 @@ param(
     [switch]
     $RESET_JETBRAINS,
     [string]
-    $JAVA_PATH = ""
+    $JAVA_PATH = "",
+    [string]
+    $MAVEN_PATH = ""
 )
 
 #================================================
@@ -118,6 +120,32 @@ function InstallUninstallJava() {
         Stop-Process -ProcessName explorer
     }
 }
+function InstallUninstallMaven() {
+    $path = (GetEnvVariable -type "system" -name "Path")
+    $mavenHomeEnvKey = "MAVEN_HOME"
+    $isSet = $false
+
+    # Remove old
+    $oldMaven = "$env:MAVEN_HOME"
+    if ($oldMaven.Length -gt 0) {
+        PrintMessage -message "Uninstall: $oldMaven" "none"
+        $path = $path.replace(";$oldMaven\bin", "")
+        SetEnvVariable -type "system" -name "Path" -value "$path"
+        DeleteEnvVariable -type "system" -name "$mavenHomeEnvKey"
+        $isSet = $true
+    }
+
+    if (($MAVEN_PATH.Length -gt 0) -and ($MAVEN_PATH -ne "-u")) {
+        PrintMessage -message "Install: $MAVEN_PATH" "none"
+        SetEnvVariable -type "system" -name "$mavenHomeEnvKey" -value "$MAVEN_PATH"
+        SetEnvVariable -type "system" -name "Path" -value "$($path + ";$MAVEN_PATH\bin")"
+        $isSet = $true
+    }
+
+    if ($isSet) {
+        RestartExplorer
+    }
+}
 
 #================================================
 #                MAIN
@@ -135,6 +163,10 @@ function Main {
     if ($RESET_JETBRAINS) { ResetJetbrains }
     if ($JAVA_PATH.Length -gt 0) {
         InstallUninstallJava
+        WaitForUserInputToConitnue
+    }
+    if ($MAVEN_PATH.Length -gt 0) {
+        InstallUninstallMaven
         WaitForUserInputToConitnue
     }
 }

@@ -1,6 +1,6 @@
 {
   "name": "tools-for-projects",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "",
   "main": "bin/src/index.js",
   "bin": {
@@ -9,7 +9,10 @@
   "scripts": {
     "compile": "tsc -p ./",
     "start": "npm run compile && node .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install:windows": "npm run compile && @powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./scripts/windows/windows.ps1 -INSTALLER install",
+    "install:linux": "npm run compile",
+    "package:windows": "npm run compile && @powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./scripts/windows/windows.ps1 -INSTALLER create-exec"
   },
   "author": "",
   "license": "ISC",

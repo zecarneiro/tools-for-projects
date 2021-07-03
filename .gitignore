@@ -9,3 +9,4 @@
 !/.vscode/tasks.json
 *.zip
 package-lock.json
+.idea

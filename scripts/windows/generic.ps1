@@ -209,3 +209,6 @@ function GetDir {
     }
     return $null
 }
+function RestartExplorer {
+    Stop-Process -ProcessName explorer
+}
